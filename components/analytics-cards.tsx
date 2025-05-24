@@ -58,7 +58,45 @@ interface DashboardData {
       productName: string;
       totalQuantity: number;
     }>;
+    turnoverAnalysis: Array<{
+      productName: string;
+      totalSold: number;
+      stockQuantity: number;
+      turnoverRatio: number;
+    }>;
+    profitExpenseAnalysis: Array<{
+      month: string;
+      totalSales: number;
+      totalExpenses: number;
+      profit: number;
+    }>;
+    monthlyExpensesByCategory: Array<{
+      month: string;
+      category: string;
+      totalExpense: number;
+    }>;
     lowStockAlert: number;
+    highExpensesAlert: number;
+  };
+  alerts?: {
+    lowStock: Array<{
+      productName: string;
+      stockQuantity: number;
+      restockThreshold: number;
+    }>;
+    highExpenses: Array<{
+      expenseId: string;
+      date: string;
+      category: string;
+      description: string;
+      amount: number;
+    }>;
+    lowTurnoverProducts: Array<{
+      productName: string;
+      totalSold: number;
+      stockQuantity: number;
+      turnoverRatio: number;
+    }>;
   };
 }
 
@@ -86,20 +124,16 @@ export function AnalyticsCards() {
   if (loading) {
     return (
       <div className="space-y-6 pr-4">
-        {" "}
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="shadow-sm border-gray-200">
-            {" "}
             <CardContent className="p-6">
-              {" "}
               <div className="animate-pulse">
-                {" "}
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>{" "}
-                <div className="h-20 bg-gray-200 rounded"></div>{" "}
-              </div>{" "}
-            </CardContent>{" "}
+                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </div>
+            </CardContent>
           </Card>
-        ))}{" "}
+        ))}
       </div>
     );
   }
@@ -117,13 +151,14 @@ export function AnalyticsCards() {
         </CardHeader>
         <CardContent>
           <div className="h-64 flex items-end justify-between space-x-2 mb-4">
-            {dashboardData?.analytics?.weeklySales?.length > 0
+            {dashboardData?.analytics?.weeklySales &&
+            dashboardData.analytics.weeklySales.length > 0
               ? dashboardData.analytics.weeklySales
                   .slice(0, 8)
                   .reverse()
                   .map((item, index) => {
                     const maxSales = Math.max(
-                      ...dashboardData.analytics.weeklySales
+                      ...(dashboardData?.analytics?.weeklySales || [])
                         .slice(0, 8)
                         .map((d) => d.weeklySales)
                     );
@@ -164,6 +199,90 @@ export function AnalyticsCards() {
                 "0"}
             </span>
             <p className="text-sm text-gray-600 mt-1">Последняя неделя</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Profit vs Expenses Chart */}
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl">Прибыль и расходы</CardTitle>
+          <CardDescription>Помесячная динамика</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64 flex items-end justify-between space-x-2 mb-4">
+            {dashboardData?.analytics?.profitExpenseAnalysis &&
+            dashboardData.analytics.profitExpenseAnalysis.length > 0
+              ? dashboardData.analytics.profitExpenseAnalysis
+                  .slice(0, 6)
+                  .reverse()
+                  .map((item, index) => {
+                    const maxValue = Math.max(
+                      ...(dashboardData?.analytics?.profitExpenseAnalysis || [])
+                        .slice(0, 6)
+                        .map((d) => Math.max(d.totalSales, d.totalExpenses))
+                    );
+                    const salesHeight =
+                      maxValue > 0 ? (item.totalSales / maxValue) * 180 : 20;
+                    const expensesHeight =
+                      maxValue > 0 ? (item.totalExpenses / maxValue) * 180 : 20;
+                    const monthName = new Date(
+                      item.month + "-01"
+                    ).toLocaleDateString("ru", { month: "short" });
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex-1 flex flex-col items-center space-y-1"
+                      >
+                        <div className="w-full flex space-x-1 items-end">
+                          <div
+                            className="bg-gradient-to-t from-green-600 to-green-400 rounded-t-md flex-1"
+                            style={{ height: `${salesHeight}px` }}
+                            title={`Продажи: ₽${item.totalSales?.toLocaleString()}`}
+                          />
+                          <div
+                            className="bg-gradient-to-t from-red-600 to-red-400 rounded-t-md flex-1"
+                            style={{ height: `${expensesHeight}px` }}
+                            title={`Расходы: ₽${item.totalExpenses?.toLocaleString()}`}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 font-medium">
+                          {monthName}
+                        </span>
+                        <div className="text-xs text-center">
+                          <div
+                            className={`font-semibold ${
+                              item.profit >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            ₽{item.profit?.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+              : [1, 2, 3, 4, 5, 6].map((_, index) => (
+                  <div
+                    key={index}
+                    className="flex-1 flex flex-col items-center"
+                  >
+                    <div className="bg-gray-200 rounded-t-md w-full h-10" />
+                    <span className="text-xs text-gray-400 mt-2">--</span>
+                  </div>
+                ))}
+          </div>
+          <div className="flex justify-center space-x-4 text-sm">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded"></div>
+              <span>Продажи</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded"></div>
+              <span>Расходы</span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -222,6 +341,61 @@ export function AnalyticsCards() {
             }) || (
               <div className="text-center text-gray-500 py-4">
                 Нет данных о товарах
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Turnover Analysis */}
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl">Оборачиваемость товаров</CardTitle>
+          <CardDescription>Анализ скорости продаж</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {dashboardData?.analytics?.turnoverAnalysis
+              ?.slice(0, 8)
+              .map((product, index) => {
+                const turnoverColor =
+                  product.turnoverRatio >= 0.5
+                    ? "text-green-600"
+                    : product.turnoverRatio >= 0.2
+                    ? "text-yellow-600"
+                    : "text-red-600";
+
+                const bgColor =
+                  product.turnoverRatio >= 0.5
+                    ? "bg-green-50 border-green-200"
+                    : product.turnoverRatio >= 0.2
+                    ? "bg-yellow-50 border-yellow-200"
+                    : "bg-red-50 border-red-200";
+
+                return (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg border ${bgColor}`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-800">
+                          {product.productName}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Продано: {product.totalSold || 0} | Остаток:{" "}
+                          {product.stockQuantity}
+                        </div>
+                      </div>
+                      <div className={`text-sm font-bold ${turnoverColor}`}>
+                        {product.turnoverRatio?.toFixed(2) || "0.00"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }) || (
+              <div className="text-center text-gray-500 py-4">
+                Нет данных об оборачиваемости
               </div>
             )}
           </div>
@@ -325,9 +499,9 @@ export function AnalyticsCards() {
         <CardHeader className="pb-4">
           <CardTitle className="text-xl flex items-center">
             <span>🚨 Товары на исходе</span>
-            {dashboardData?.analytics?.lowStockAlert > 0 && (
+            {(dashboardData?.analytics?.lowStockAlert || 0) > 0 && (
               <span className="ml-2 bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                {dashboardData.analytics.lowStockAlert}
+                {dashboardData?.analytics?.lowStockAlert || 0}
               </span>
             )}
           </CardTitle>
@@ -361,6 +535,102 @@ export function AnalyticsCards() {
           </div>
         </CardContent>
       </Card>
+
+      {/* High Expenses Alert */}
+      {(dashboardData?.analytics?.highExpensesAlert || 0) > 0 && (
+        <Card className="shadow-sm border-red-200 bg-red-50">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl flex items-center text-red-700">
+              <span>⚠️ Крупные расходы</span>
+              <span className="ml-2 bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                {dashboardData?.analytics?.highExpensesAlert || 0}
+              </span>
+            </CardTitle>
+            <CardDescription className="text-red-600">
+              Расходы свыше ₽1,000
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {dashboardData?.alerts?.highExpenses
+                ?.slice(0, 5)
+                .map((expense, index) => (
+                  <div
+                    key={index}
+                    className="p-3 bg-white rounded-lg border border-red-200"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-800">
+                          {expense.description}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {expense.category} •{" "}
+                          {new Date(expense.date).toLocaleDateString("ru")}
+                        </div>
+                      </div>
+                      <div className="text-red-600 font-bold">
+                        ₽{expense.amount?.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                )) || (
+                <div className="text-center text-gray-500 py-4">
+                  Нет крупных расходов
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Low Turnover Products Alert */}
+      {(dashboardData?.alerts?.lowTurnoverProducts?.length || 0) > 0 && (
+        <Card className="shadow-sm border-orange-200 bg-orange-50">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl flex items-center text-orange-700">
+              <span>📈 Медленные товары</span>
+              <span className="ml-2 bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full">
+                {dashboardData?.alerts?.lowTurnoverProducts?.length || 0}
+              </span>
+            </CardTitle>
+            <CardDescription className="text-orange-600">
+              Низкая оборачиваемость (&lt; 0.1)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {dashboardData?.alerts?.lowTurnoverProducts
+                ?.slice(0, 5)
+                .map((product, index) => (
+                  <div
+                    key={index}
+                    className="p-3 bg-white rounded-lg border border-orange-200"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-800">
+                          {product.productName}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Продано: {product.totalSold || 0} | Остаток:{" "}
+                          {product.stockQuantity}
+                        </div>
+                      </div>
+                      <div className="text-orange-600 font-bold">
+                        {(product.turnoverRatio || 0).toFixed(3)}
+                      </div>
+                    </div>
+                  </div>
+                )) || (
+                <div className="text-center text-gray-500 py-4">
+                  Нет медленных товаров
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Expenses by Category */}
       <Card className="shadow-sm border-gray-200">

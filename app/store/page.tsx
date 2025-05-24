@@ -51,6 +51,7 @@ export default function StorePage() {
     "products" | "customers" | "orders"
   >("products");
   const [searchTerm, setSearchTerm] = useState("");
+
   const toast = useToast();
 
   useEffect(() => {
@@ -62,17 +63,27 @@ export default function StorePage() {
           fetch("/api/low-stock"),
         ]);
 
+        // Check if responses are ok
+        if (!inventoryRes.ok || !salesRes.ok || !lowStockRes.ok) {
+          throw new Error("Failed to fetch data from server");
+        }
+
         const [inventoryData, salesData, lowStockData] = await Promise.all([
           inventoryRes.json(),
           salesRes.json(),
           lowStockRes.json(),
         ]);
 
-        setInventory(inventoryData);
-        setSales(salesData);
-        setLowStock(lowStockData);
+        // Ensure data is arrays, fallback to empty arrays if not
+        setInventory(Array.isArray(inventoryData) ? inventoryData : []);
+        setSales(Array.isArray(salesData) ? salesData : []);
+        setLowStock(Array.isArray(lowStockData) ? lowStockData : []);
       } catch (error) {
         console.error("Failed to fetch store data:", error);
+        // Set empty arrays on error
+        setInventory([]);
+        setSales([]);
+        setLowStock([]);
       } finally {
         setLoading(false);
       }
