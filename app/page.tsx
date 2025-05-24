@@ -3,7 +3,7 @@ import { AIChat } from "@/components/ai-chat";
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col space-y-6">
+    <div className="h-screen flex flex-col p-6 space-y-6 overflow-hidden">
       {/* Page Description */}
       <div>
         <p className="text-muted-foreground">
@@ -11,18 +11,19 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Grid Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Side - Analytics Cards */}
-        <div className="xl:col-span-2">
+      {/* Контейнер на всю оставшуюся высоту экрана */}
+      <div className="flex-1 flex flex-col xl:flex-row gap-6 overflow-hidden">
+        {/* Левая часть — чарты, с прокруткой */}
+        <div className="flex-1 overflow-auto">
           <AnalyticsCards />
         </div>
 
-        {/* Right Side - AI Chat */}
-        <div className="xl:col-span-1">
+        {/* Правая часть — чат, не прокручивается */}
+        <div className="w-full xl:w-1/3 flex-shrink-0">
           <AIChat />
         </div>
       </div>
     </div>
   );
 }
+
