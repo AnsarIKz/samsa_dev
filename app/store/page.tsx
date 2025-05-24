@@ -166,7 +166,7 @@ export default function StorePage() {
           <CardContent className="p-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                ₽{totalValue.toLocaleString()}
+                ${totalValue.toLocaleString()}
               </div>
               <div className="text-sm text-gray-500">Стоимость склада</div>
             </div>
@@ -270,7 +270,7 @@ export default function StorePage() {
                       </TableCell>
                       <TableCell>{item.Category}</TableCell>
                       <TableCell>
-                        ₽{item["Unit Price"].toLocaleString()}
+                        ${item["Unit Price"].toLocaleString()}
                       </TableCell>
                       <TableCell>{item["Stock Quantity"]}</TableCell>
                       <TableCell>
@@ -349,7 +349,7 @@ export default function StorePage() {
                           {sale["Product Name"]}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {sale.Quantity} шт × ₽
+                          {sale.Quantity} шт × $
                           {(
                             (sale["Total Amount"] || 0) / (sale.Quantity || 1)
                           ).toFixed(0)}
@@ -360,7 +360,7 @@ export default function StorePage() {
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-green-600">
-                          ₽{(sale["Total Amount"] || 0).toLocaleString()}
+                          ${(sale["Total Amount"] || 0).toLocaleString()}
                         </div>
                       </div>
                     </div>

@@ -183,7 +183,7 @@ export default function CustomersPage() {
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
             <CardContent className="p-6 text-center">
               <div className="text-3xl font-bold text-purple-700">
-                ₽{totalRevenue.toLocaleString()}
+                ${totalRevenue.toLocaleString()}
               </div>
               <div className="text-sm text-purple-600 font-medium">
                 Общая выручка
@@ -194,7 +194,7 @@ export default function CustomersPage() {
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
             <CardContent className="p-6 text-center">
               <div className="text-3xl font-bold text-orange-700">
-                ₽{Math.round(avgOrderValue).toLocaleString()}
+                ${Math.round(avgOrderValue).toLocaleString()}
               </div>
               <div className="text-sm text-orange-600 font-medium">
                 Средний чек
@@ -244,7 +244,7 @@ export default function CustomersPage() {
                           {customer.totalOrders}
                         </td>
                         <td className="p-3 text-right font-medium">
-                          ₽{customer.totalSpent.toLocaleString()}
+                          ${customer.totalSpent.toLocaleString()}
                         </td>
                         <td className="p-3">
                           {new Date(customer.lastOrderDate).toLocaleDateString(
@@ -308,11 +308,10 @@ export default function CustomersPage() {
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-green-600">
-                          ₽{customer.totalSpent.toLocaleString()}
+                          ${customer.totalSpent.toLocaleString()}
                         </div>
                         <div className="text-xs text-gray-500">
-                          ₽
-                          {Math.round(
+                          ${Math.round(
                             customer.totalSpent / customer.totalOrders
                           ).toLocaleString()}{" "}
                           средний чек
@@ -366,7 +365,7 @@ export default function CustomersPage() {
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-green-600">
-                          ₽{(order["Total Amount"] || 0).toLocaleString()}
+                          ${(order["Total Amount"] || 0).toLocaleString()}
                         </div>
                       </div>
                     </div>
