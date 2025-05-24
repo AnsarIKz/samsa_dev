@@ -561,16 +561,22 @@ export function AnalyticsCards() {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
+                        {" "}
                         <div className="text-sm font-medium text-gray-800">
-                          {expense.description}
-                        </div>
+                          {" "}
+                          {expense.description || "Без описания"}{" "}
+                        </div>{" "}
                         <div className="text-xs text-gray-500">
-                          {expense.category} •{" "}
-                          {new Date(expense.date).toLocaleDateString("ru")}
-                        </div>
-                      </div>
+                          {" "}
+                          {expense.category || "Без категории"} •{" "}
+                          {expense.date
+                            ? new Date(expense.date).toLocaleDateString("ru-RU")
+                            : "Нет даты"}{" "}
+                        </div>{" "}
+                      </div>{" "}
                       <div className="text-red-600 font-bold">
-                        ₽{expense.amount?.toLocaleString()}
+                        {" "}
+                        ₽{expense.amount?.toLocaleString() || "0"}{" "}
                       </div>
                     </div>
                   </div>

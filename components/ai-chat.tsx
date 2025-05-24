@@ -25,7 +25,7 @@ export function AIChat() {
     {
       id: "1",
       content:
-        "Привет! Я ваш AI ассистент. Помогу проанализировать данные и ответить на вопросы о бизнесе.",
+        "Привет! Я ваш AI ассистент с доступом к данным бизнеса. Спрашивайте о продажах, товарах, расходах - отвечу на основе реальных данных! 🤖",
       sender: "ai",
       timestamp: "10:00",
     },
@@ -37,10 +37,10 @@ export function AIChat() {
   const quickQuestions = [
     "Какой самый популярный товар?",
     "Покажи динамику продаж",
-    "Анализ клиентской базы",
-    "Прогноз на следующий месяц",
-    "Топ регионы по продажам",
-    "Анализ прибыльности",
+    "Что заканчивается на складе?",
+    "Анализ прибыли и расходов",
+    "Какие товары плохо продаются?",
+    "Дай рекомендации по бизнесу",
   ];
 
   const handleSendMessage = async (content?: string) => {
@@ -65,25 +65,73 @@ export function AIChat() {
 
     const thinkingToast = toast.chat.thinking();
 
-    setTimeout(() => {
+    try {
+      // Call OpenAI chat API
+      const response = await fetch("/api/ai-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: messageContent }),
+      });
+
+      const data = await response.json();
+
       toast.dismiss(thinkingToast);
       setIsLoading(false);
 
-      const responses = [
-        "Согласно анализу ваших данных, самый популярный товар - 'Беспроводные наушники Pro' с 234 продажами за месяц.",
-        "Выручка выросла на 12.5% по сравнению с прошлым месяцем. Основной рост в категории 'Электроника'.",
-        "В вашей клиентской базе 1,247 активных клиентов. Средний LTV составляет ₽15,340.",
-        "Прогноз показывает рост продаж на 8-12% в следующем месяце на основе сезонных трендов.",
-        "Топ-3 региона: Москва (35%), СПб (18%), Екатеринбург (12%). Потенциал роста в южных регионах.",
-        "Маржинальность по категориям: Электроника 23%, Одежда 45%, Дом и сад 31%. Рекомендую фокус на одежде.",
-      ];
+      if (data.success) {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: data.response,
+          sender: "ai",
+          timestamp: new Date().toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
 
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
+        setMessages((prev) => [...prev, aiMessage]);
 
-      const aiMessage: Message = {
+        // Show success toast with token usage if available
+        if (data.tokensUsed && !data.fallback) {
+          setTimeout(() => {
+            toast.aiInsight.discovered(
+              `✅ AI ответ готов! Использовано токенов: ${data.tokensUsed}`
+            );
+          }, 500);
+        } else if (data.fallback) {
+          setTimeout(() => {
+            toast.aiInsight.discovered(
+              "🔧 Настройте OpenAI API для полного функционала"
+            );
+          }, 500);
+        }
+      } else {
+        // Handle error response
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content:
+            data.fallback ||
+            "❌ Извините, произошла ошибка при обработке запроса.",
+          sender: "ai",
+          timestamp: new Date().toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      toast.dismiss(thinkingToast);
+      setIsLoading(false);
+
+      console.error("Chat error:", error);
+
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: randomResponse,
+        content: "❌ Ошибка соединения. Проверьте интернет и попробуйте снова.",
         sender: "ai",
         timestamp: new Date().toLocaleTimeString("ru-RU", {
           hour: "2-digit",
@@ -91,16 +139,8 @@ export function AIChat() {
         }),
       };
 
-      setMessages((prev) => [...prev, aiMessage]);
-
-      if (Math.random() < 0.3) {
-        setTimeout(() => {
-          toast.aiInsight.discovered(
-            "Обнаружена аномалия в данных о возвратах - увеличение на 15%"
-          );
-        }, 2000);
-      }
-    }, 2500);
+      setMessages((prev) => [...prev, errorMessage]);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -113,9 +153,14 @@ export function AIChat() {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle>AI Ассистент</CardTitle>
+        <CardTitle className="flex items-center">
+          🤖 AI Ассистент
+          <span className="ml-2 text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+            OpenAI
+          </span>
+        </CardTitle>
         <CardDescription>
-          Задавайте вопросы о ваших данных и получайте инсайты
+          Задавайте вопросы о ваших данных и получайте AI-инсайты
         </CardDescription>
       </CardHeader>
 
@@ -131,7 +176,7 @@ export function AIChat() {
                 key={index}
                 variant="outline"
                 size="sm"
-                className="text-xs h-auto py-2 px-3 text-left justify-start"
+                className="text-xs h-auto py-2 px-3 text-left justify-start hover:bg-blue-50"
                 onClick={() => handleSendMessage(question)}
                 disabled={isLoading}
               >
@@ -158,7 +203,9 @@ export function AIChat() {
                       : "bg-gray-100 text-gray-900"
                   }`}
                 >
-                  <div className="text-sm">{message.content}</div>
+                  <div className="text-sm whitespace-pre-wrap">
+                    {message.content}
+                  </div>
                   <div
                     className={`text-xs mt-1 ${
                       message.sender === "user"
@@ -173,17 +220,20 @@ export function AIChat() {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="max-w-[90%] rounded-lg px-3 py-2 bg-gray-100">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    />
+                <div className="max-w-[90%] rounded-lg px-3 py-2 bg-blue-50 border border-blue-200">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
+                      <div
+                        className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0.1s" }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0.2s" }}
+                      />
+                    </div>
+                    <span className="text-xs text-blue-600">AI думает...</span>
                   </div>
                 </div>
               </div>
@@ -197,16 +247,21 @@ export function AIChat() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Задайте вопрос о ваших данных..."
+            placeholder="Спросите что-нибудь о ваших данных..."
             disabled={isLoading}
             className="flex-1"
           />
           <Button
             onClick={() => handleSendMessage()}
             disabled={isLoading || !inputValue.trim()}
+            className="bg-blue-600 hover:bg-blue-700"
           >
-            Отправить
+            {isLoading ? "..." : "💬"}
           </Button>
+        </div>
+
+        <div className="text-xs text-gray-500 text-center">
+          AI имеет доступ к реальным данным вашего бизнеса
         </div>
       </CardContent>
     </Card>
