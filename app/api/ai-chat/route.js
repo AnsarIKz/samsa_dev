@@ -162,10 +162,13 @@ export async function POST(request) {
     const { message } = await request.json();
 
     if (!message || !message.trim()) {
-      return NextResponse.json(
-        { error: "Message is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: "Message is required",
+        response: "❌ Сообщение не может быть пустым",
+        fallback: true,
+        timestamp: new Date().toISOString(),
+      });
     }
 
     // Get current dashboard data for context
@@ -186,13 +189,15 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("AI Chat API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to process chat message",
-        details: error.message,
-        fallback: "❌ Ошибка обработки сообщения. Проверьте настройки API.",
-      },
-      { status: 500 }
-    );
+
+    // Always return JSON with success: false, never let it fall through to HTML error page
+    return NextResponse.json({
+      success: false,
+      error: "Failed to process chat message",
+      response:
+        "❌ Извините, произошла ошибка. Попробуйте позже или проверьте настройки OpenAI API.",
+      fallback: true,
+      timestamp: new Date().toISOString(),
+    });
   }
 }
