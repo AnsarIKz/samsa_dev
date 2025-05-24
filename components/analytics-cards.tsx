@@ -174,7 +174,7 @@ export function AnalyticsCards() {
                         <div
                           className="bg-gradient-to-t from-purple-600 to-purple-400 rounded-t-md w-full transition-all hover:from-purple-700 hover:to-purple-500"
                           style={{ height: `${height}px` }}
-                          title={`Неделя ${weekNum}: ₽${item.weeklySales?.toLocaleString()}`}
+                          title={`Неделя ${weekNum}: $${item.weeklySales?.toLocaleString()}`}
                         />
                         <span className="text-xs text-gray-500 mt-2 font-medium">
                           {weekNum}н
@@ -194,8 +194,7 @@ export function AnalyticsCards() {
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <span className="text-2xl font-bold text-purple-600">
-              ₽
-              {dashboardData?.analytics?.weeklySales?.[0]?.weeklySales?.toLocaleString() ||
+              ${dashboardData?.analytics?.weeklySales?.[0]?.weeklySales?.toLocaleString() ||
                 "0"}
             </span>
             <p className="text-sm text-gray-600 mt-1">Последняя неделя</p>
@@ -239,12 +238,12 @@ export function AnalyticsCards() {
                           <div
                             className="bg-gradient-to-t from-green-600 to-green-400 rounded-t-md flex-1"
                             style={{ height: `${salesHeight}px` }}
-                            title={`Продажи: ₽${item.totalSales?.toLocaleString()}`}
+                            title={`Продажи: $${item.totalSales?.toLocaleString()}`}
                           />
                           <div
                             className="bg-gradient-to-t from-red-600 to-red-400 rounded-t-md flex-1"
                             style={{ height: `${expensesHeight}px` }}
-                            title={`Расходы: ₽${item.totalExpenses?.toLocaleString()}`}
+                            title={`Расходы: $${item.totalExpenses?.toLocaleString()}`}
                           />
                         </div>
                         <span className="text-xs text-gray-500 font-medium">
@@ -258,7 +257,7 @@ export function AnalyticsCards() {
                                 : "text-red-600"
                             }`}
                           >
-                            ₽{item.profit?.toLocaleString()}
+                            ${item.profit?.toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -324,7 +323,7 @@ export function AnalyticsCards() {
                         {product.totalQuantity} шт
                       </div>
                       <div className="text-xs text-gray-500">
-                        ₽{product.totalSales?.toLocaleString()}
+                        ${product.totalSales?.toLocaleString()}
                       </div>
                     </div>
                   </div>
@@ -426,7 +425,7 @@ export function AnalyticsCards() {
                       <div
                         className="bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-md w-full transition-all hover:from-blue-700 hover:to-blue-500"
                         style={{ height: `${height}px` }}
-                        title={`${monthName}: ₽${item.revenue?.toLocaleString()}`}
+                        title={`$${monthName}: ${item.revenue?.toLocaleString()}`}
                       />
                       <span className="text-xs text-gray-500 mt-2 font-medium">
                         {monthName}
@@ -446,7 +445,7 @@ export function AnalyticsCards() {
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <span className="text-2xl font-bold text-green-600">
-              ₽{dashboardData?.revenue?.total?.toLocaleString() || "0"}
+              ${dashboardData?.revenue?.total?.toLocaleString() || "0"}
             </span>
             <p className="text-sm text-gray-600 mt-1">Общая выручка</p>
           </div>
@@ -471,7 +470,7 @@ export function AnalyticsCards() {
             </div>
             <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200">
               <div className="text-2xl font-bold text-green-700">
-                ₽{dashboardData?.revenue?.total?.toLocaleString() || "0"}
+                ${dashboardData?.revenue?.total?.toLocaleString() || "0"}
               </div>
               <div className="text-sm text-green-600 font-medium">Продажи</div>
             </div>
@@ -483,8 +482,7 @@ export function AnalyticsCards() {
             </div>
             <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200">
               <div className="text-2xl font-bold text-orange-700">
-                ₽
-                {Math.round(
+                ${Math.round(
                   dashboardData?.profit?.amount || 0
                 ).toLocaleString()}
               </div>
@@ -547,7 +545,7 @@ export function AnalyticsCards() {
               </span>
             </CardTitle>
             <CardDescription className="text-red-600">
-              Расходы свыше ₽1,000
+              Расходы свыше $1,000
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -575,8 +573,12 @@ export function AnalyticsCards() {
                         </div>{" "}
                       </div>{" "}
                       <div className="text-red-600 font-bold">
+<<<<<<< HEAD
                         {" "}
                         ₽{expense.amount?.toLocaleString() || "0"}{" "}
+=======
+                        ${expense.amount?.toLocaleString()}
+>>>>>>> 93b59f5449ed582c61b8b96d871bf621b177d96e
                       </div>
                     </div>
                   </div>
@@ -667,7 +669,7 @@ export function AnalyticsCards() {
                         {category.Category}
                       </span>
                       <span className="text-sm text-gray-500 font-semibold">
-                        ₽{category.total?.toLocaleString()} (
+                        ${category.total?.toLocaleString()} (
                         {percentage.toFixed(1)}%)
                       </span>
                     </div>
