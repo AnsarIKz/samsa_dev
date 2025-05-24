@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,6 +14,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 
@@ -80,6 +83,7 @@ const UsersIcon = () => (
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { state } = useSidebar();
 
   const mainMenuItems = [
     {
@@ -112,16 +116,21 @@ export function AppSidebar() {
   ];
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="offcanvas">
       <SidebarHeader className="p-4">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">AI</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">AI</span>
+            </div>
+            <div>
+              <h2 className="font-semibold text-lg">Business AI</h2>
+              <p className="text-xs text-gray-500">Analytics Platform</p>
+            </div>
           </div>
-          <div className="group-data-[collapsible=icon]:hidden">
-            <h2 className="font-semibold text-lg">Business AI</h2>
-            <p className="text-xs text-gray-500">Analytics Platform</p>
-          </div>
+          <SidebarTrigger className="ml-auto h-8 w-8 hover:bg-gray-100 rounded-lg transition-all duration-200">
+            <ChevronLeft className="h-4 w-4" />
+          </SidebarTrigger>
         </div>
       </SidebarHeader>
 
@@ -194,7 +203,7 @@ export function AppSidebar() {
           <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
             <span className="text-sm font-medium">AV</span>
           </div>
-          <div className="flex-1 group-data-[collapsible=icon]:hidden">
+          <div className="flex-1">
             <p className="text-sm font-medium">Admin User</p>
             <p className="text-xs text-gray-500">admin@company.com</p>
           </div>
