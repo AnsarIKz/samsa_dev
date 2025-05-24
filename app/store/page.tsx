@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -21,148 +21,65 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/lib/toast";
 
-// Типы данных
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  stock: number;
-  status: "active" | "inactive" | "low_stock";
-  lastUpdated: string;
+interface InventoryItem {
+  "Product Name": string;
+  "Stock Quantity": number;
+  "Unit Price": number;
+  "Restock Threshold": number;
+  Category?: string;
 }
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  totalOrders: number;
-  totalSpent: number;
-  lastOrder: string;
-  status: "active" | "inactive";
+interface SalesItem {
+  "Product Name": string;
+  Quantity: number;
+  "Total Amount": number;
+  Date: string;
 }
 
-interface Order {
-  id: string;
-  customerName: string;
-  amount: number;
-  status: "pending" | "completed" | "cancelled";
-  date: string;
-  items: number;
+interface LowStockItem {
+  productName: string;
+  stockQuantity: number;
+  restockThreshold: number;
 }
-
-// Моковые данные
-const mockProducts: Product[] = [
-  {
-    id: "P001",
-    name: "Беспроводные наушники Pro",
-    category: "Электроника",
-    price: 15990,
-    stock: 45,
-    status: "active",
-    lastUpdated: "2024-01-15",
-  },
-  {
-    id: "P002",
-    name: "Умные часы Sport",
-    category: "Электроника",
-    price: 12990,
-    stock: 23,
-    status: "active",
-    lastUpdated: "2024-01-14",
-  },
-  {
-    id: "P003",
-    name: "Куртка зимняя",
-    category: "Одежда",
-    price: 8990,
-    stock: 5,
-    status: "low_stock",
-    lastUpdated: "2024-01-13",
-  },
-  {
-    id: "P004",
-    name: "Кофемашина Deluxe",
-    category: "Дом и сад",
-    price: 45990,
-    stock: 12,
-    status: "active",
-    lastUpdated: "2024-01-12",
-  },
-  {
-    id: "P005",
-    name: "Книга 'Бизнес-аналитика'",
-    category: "Книги",
-    price: 1990,
-    stock: 0,
-    status: "inactive",
-    lastUpdated: "2024-01-10",
-  },
-];
-
-const mockCustomers: Customer[] = [
-  {
-    id: "C001",
-    name: "Иван Петров",
-    email: "ivan@example.com",
-    totalOrders: 15,
-    totalSpent: 125000,
-    lastOrder: "2024-01-15",
-    status: "active",
-  },
-  {
-    id: "C002",
-    name: "Мария Сидорова",
-    email: "maria@example.com",
-    totalOrders: 8,
-    totalSpent: 75000,
-    lastOrder: "2024-01-12",
-    status: "active",
-  },
-  {
-    id: "C003",
-    name: "Алексей Козлов",
-    email: "alex@example.com",
-    totalOrders: 3,
-    totalSpent: 25000,
-    lastOrder: "2023-12-20",
-    status: "inactive",
-  },
-];
-
-const mockOrders: Order[] = [
-  {
-    id: "O001",
-    customerName: "Иван Петров",
-    amount: 15990,
-    status: "completed",
-    date: "2024-01-15",
-    items: 1,
-  },
-  {
-    id: "O002",
-    customerName: "Мария Сидорова",
-    amount: 8990,
-    status: "pending",
-    date: "2024-01-14",
-    items: 2,
-  },
-  {
-    id: "O003",
-    customerName: "Алексей Козлов",
-    amount: 12990,
-    status: "cancelled",
-    date: "2024-01-13",
-    items: 1,
-  },
-];
 
 export default function StorePage() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [sales, setSales] = useState<SalesItem[]>([]);
+  const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "products" | "customers" | "orders"
   >("products");
   const [searchTerm, setSearchTerm] = useState("");
   const toast = useToast();
+
+  useEffect(() => {
+    async function fetchStoreData() {
+      try {
+        const [inventoryRes, salesRes, lowStockRes] = await Promise.all([
+          fetch("/api/inventory"),
+          fetch("/api/sales"),
+          fetch("/api/low-stock"),
+        ]);
+
+        const [inventoryData, salesData, lowStockData] = await Promise.all([
+          inventoryRes.json(),
+          salesRes.json(),
+          lowStockRes.json(),
+        ]);
+
+        setInventory(inventoryData);
+        setSales(salesData);
+        setLowStock(lowStockData);
+      } catch (error) {
+        console.error("Failed to fetch store data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchStoreData();
+  }, []);
 
   const handleRefreshData = () => {
     toast.success("Данные обновлены", {
@@ -184,23 +101,41 @@ export default function StorePage() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const filteredProducts = mockProducts.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = inventory.filter(
+    (item) =>
+      item["Product Name"].toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.Category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredCustomers = mockCustomers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const totalValue = inventory.reduce(
+    (sum, item) => sum + item["Stock Quantity"] * item["Unit Price"],
+    0
   );
 
-  const filteredOrders = mockOrders.filter(
-    (order) =>
-      order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const recentSales = sales.slice(0, 10);
+
+  if (loading) {
+    return (
+      <div className="flex-1 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Магазин</h1>
+            <p className="text-gray-600">Управление товарами и складом</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                  <div className="h-20 bg-gray-200 rounded"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -221,7 +156,7 @@ export default function StorePage() {
           <CardContent className="p-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {mockProducts.length}
+                {inventory.length}
               </div>
               <div className="text-sm text-gray-500">Товаров</div>
             </div>
@@ -231,9 +166,19 @@ export default function StorePage() {
           <CardContent className="p-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {mockCustomers.length}
+                ₽{totalValue.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-500">Клиентов</div>
+              <div className="text-sm text-gray-500">Стоимость склада</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">
+                {lowStock.length}
+              </div>
+              <div className="text-sm text-gray-500">Мало на складе</div>
             </div>
           </CardContent>
         </Card>
@@ -241,24 +186,9 @@ export default function StorePage() {
           <CardContent className="p-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {mockOrders.length}
+                {recentSales.length}
               </div>
-              <div className="text-sm text-gray-500">Заказов</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                ₽
-                {(
-                  mockProducts.reduce((sum, p) => sum + p.price * p.stock, 0) /
-                  1000
-                ).toFixed(0)}
-                K
-              </div>
-              <div className="text-sm text-gray-500">Стоимость склада</div>
+              <div className="text-sm text-gray-500">Последние продажи</div>
             </div>
           </CardContent>
         </Card>
@@ -326,86 +256,119 @@ export default function StorePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-mono">{product.id}</TableCell>
-                    <TableCell className="font-medium">
-                      {product.name}
-                    </TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell>₽{product.price.toLocaleString()}</TableCell>
-                    <TableCell>{product.stock}</TableCell>
-                    <TableCell>{getStatusBadge(product.status)}</TableCell>
-                    <TableCell>{product.lastUpdated}</TableCell>
-                  </TableRow>
-                ))}
+                {filteredProducts.map((item, index) => {
+                  const isLowStock =
+                    item["Stock Quantity"] <= item["Restock Threshold"];
+                  const totalPrice =
+                    item["Stock Quantity"] * item["Unit Price"];
+
+                  return (
+                    <TableRow key={index}>
+                      <TableCell className="font-mono">{index + 1}</TableCell>
+                      <TableCell className="font-medium">
+                        {item["Product Name"]}
+                      </TableCell>
+                      <TableCell>{item.Category}</TableCell>
+                      <TableCell>
+                        ₽{item["Unit Price"].toLocaleString()}
+                      </TableCell>
+                      <TableCell>{item["Stock Quantity"]}</TableCell>
+                      <TableCell>
+                        {isLowStock ? (
+                          <Badge variant="destructive">Мало</Badge>
+                        ) : (
+                          <Badge variant="default">В наличии</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{item["Restock Threshold"]}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
 
-          {/* Customers Table */}
-          {activeTab === "customers" && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Имя</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Заказов</TableHead>
-                  <TableHead>Потрачено</TableHead>
-                  <TableHead>Последний заказ</TableHead>
-                  <TableHead>Статус</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCustomers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell className="font-mono">{customer.id}</TableCell>
-                    <TableCell className="font-medium">
-                      {customer.name}
-                    </TableCell>
-                    <TableCell>{customer.email}</TableCell>
-                    <TableCell>{customer.totalOrders}</TableCell>
-                    <TableCell>
-                      ₽{customer.totalSpent.toLocaleString()}
-                    </TableCell>
-                    <TableCell>{customer.lastOrder}</TableCell>
-                    <TableCell>{getStatusBadge(customer.status)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          {/* Low Stock Alert */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                �� Требует пополнения
+                {lowStock.length > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    {lowStock.length}
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription>Товары с низким остатком</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {lowStock.length > 0 ? (
+                  lowStock.map((item, index) => (
+                    <div
+                      key={index}
+                      className="p-3 bg-red-50 rounded-lg border border-red-200"
+                    >
+                      <div className="font-medium text-gray-800">
+                        {item.productName}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Остаток:{" "}
+                        <span className="font-medium text-red-600">
+                          {item.stockQuantity}
+                        </span>{" "}
+                        шт
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Лимит: {item.restockThreshold} шт
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-green-600 bg-green-50 rounded-lg">
+                    ✅ Все товары в достатке
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Orders Table */}
-          {activeTab === "orders" && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Клиент</TableHead>
-                  <TableHead>Сумма</TableHead>
-                  <TableHead>Товаров</TableHead>
-                  <TableHead>Дата</TableHead>
-                  <TableHead>Статус</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-mono">{order.id}</TableCell>
-                    <TableCell className="font-medium">
-                      {order.customerName}
-                    </TableCell>
-                    <TableCell>₽{order.amount.toLocaleString()}</TableCell>
-                    <TableCell>{order.items}</TableCell>
-                    <TableCell>{order.date}</TableCell>
-                    <TableCell>{getStatusBadge(order.status)}</TableCell>
-                  </TableRow>
+          {/* Recent Sales */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Последние продажи</CardTitle>
+              <CardDescription>Недавняя активность</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentSales.map((sale, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-800">
+                          {sale["Product Name"]}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {sale.Quantity} шт × ₽
+                          {(
+                            (sale["Total Amount"] || 0) / (sale.Quantity || 1)
+                          ).toFixed(0)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(sale.Date).toLocaleDateString("ru")}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-green-600">
+                          ₽{(sale["Total Amount"] || 0).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          )}
+              </div>
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
     </div>
